@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+APP_DIR=${APP_DIR:-/app}
+
+echo "-----> Adding specific missing shared library files to profile"
+cat <<EOF > $BUILD_DIR/.profile.d/zzz_library_path_fi.sh
+export LD_LIBRARY_PATH="${APP_DIR}/.apt/usr/lib/x86_64-linux-gnu/pulseaudio:\$LD_LIBRARY_PATH"
+EOF
