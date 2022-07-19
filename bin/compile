@@ -10,9 +10,9 @@ echo "-----> Adding specific missing shared library files to profile"
 cat <<EOF > $BUILD_DIR/.profile.d/zzz_library_path_fixes.sh
 # Manually running apt-get install of graphicsmagick seems to work fine but using the
 # heroku-buildpack-apt seems to be missing the configuration files.
-GM_DIRECTORY=$(dirname $(which gm))
-GM_VERSION=$(gm -version | head -n1 | cut -d ' ' -f2)
+GM_DIRECTORY=\$(dirname \$(which gm))
+GM_VERSION=\$(gm -version | head -n1 | cut -d ' ' -f2)
 
 export LD_LIBRARY_PATH="${APP_DIR}/.apt/lib/x86_64-linux-gnu/:${APP_DIR}/.apt/usr/lib/x86_64-linux-gnu/pulseaudio:\$LD_LIBRARY_PATH"
-export MAGICK_CONFIGURE_PATH="${GM_DIRECTORY}/../lib/GraphicsMagick-${GM_VERSION}/config"
+export MAGICK_CONFIGURE_PATH="\$GM_DIRECTORY/../lib/GraphicsMagick-\$GM_VERSION/config"
 EOF
