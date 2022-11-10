@@ -25,5 +25,5 @@ command -v ascli >/dev/null 2>&1 && {
   echo "BUILD_DIR=$BUILD_DIR"
   echo "HOME=$HOME"
   echo "APP_DIR=$APP_DIR"
-  ASCLI_HOME="$APP_DIR/.aspera/ascli" ascli conf ascp install --log-level=debug
+  HOME="$APP_DIR" ascli conf ascp install --log-level=debug
 }
