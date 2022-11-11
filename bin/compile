@@ -22,5 +22,9 @@ EOF
 # this.
 command -v ascli >/dev/null 2>&1 && {
   echo "-----> Installing ascp transfer agent for Aspera CLI (installed via bundler)"
-  ascli conf ascp install
+  # Without specifying HOME or ASCLI_HOME, ascp will be installed wherever HOME is when this
+  # buildpack is running. By setting HOME, ascli will install ascp in the same place as the cli will
+  # look for it when called from the app. If ASCLI_HOME is set, ascli will not try to construct the
+  # default location so we'd also need to set it in the App to make sure they always match.
+  HOME="$BUILD_DIR" ascli conf ascp install
 }
