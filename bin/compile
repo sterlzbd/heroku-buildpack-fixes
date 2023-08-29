@@ -7,7 +7,7 @@ CACHE_DIR=$2
 APP_DIR=${APP_DIR:-/app}
 
 echo "-----> Adding specific missing shared library files to profile"
-cat <<EOF > $BUILD_DIR/.profile.d/zzz_library_path_fixes.sh
+cat <<EOF > "$BUILD_DIR"/.profile.d/zzz_library_path_fixes.sh
 # Manually running apt-get install of graphicsmagick seems to work fine but using the
 # heroku-buildpack-apt seems to be missing the configuration files.
 GM_DIRECTORY=\$(dirname \$(which gm))
@@ -23,14 +23,16 @@ if command -v ascli >/dev/null 2>&1; then
   # via the ruby gem we can probably remove this.
   echo "-----> Installing ascp transfer agent for Aspera CLI (installed via bundler)"
 
-  mkdir -p $CACHE_DIR
+  mkdir -p "$CACHE_DIR"
 
+  # namespaced in case something else is caching an sdk
   CACHED_SDK_DIR="$CACHE_DIR/ASPERA_SDK"
-  mkdir -p $CACHED_SDK_DIR
+  mkdir -p "$CACHED_SDK_DIR"
 
   SDK_DIR="$(ascli config folder)/sdk"
+  CACHED_SDK="${CACHED_SDK_DIR}/sdk"
 
-  if [ ! -d "${CACHED_SDK_DIR}/sdk" ]; then
+  if [ ! -d "${CACHED_SDK}" ]; then
     echo "-----> Downloading aspera sdk and installing ascp"
     # Without specifying HOME or ASCLI_HOME, ascp will be installed wherever
     # HOME is when this buildpack is running. By setting HOME, ascli will
@@ -42,10 +44,18 @@ if command -v ascli >/dev/null 2>&1; then
 
     # cache the sdk for future builds because downloading the sdk was intermittenly
     # extrememly slow
-    cp -r $SDK_DIR $CACHED_SDK_DIR
+    cp -r "$SDK_DIR" "$CACHED_SDK_DIR"
+
+    if [ ! -d "${CACHED_SDK}" ]; then
+      echo "ERROR: expected cached sdk"
+      ls -l "${CACHED_SDK_DIR}"
+      exit 1
+    else
+      echo "cached sdk for next build"
+    fi
   else
     echo "----->  Fetching aspera sdk from cache"
-    cp -r $CACHED_SDK_DIR $SDK_DIR
+    cp -r "$CACHED_SDK_DIR" "$SDK_DIR"
   fi
 
   # this should throw an error if it wasnt installed correctly
