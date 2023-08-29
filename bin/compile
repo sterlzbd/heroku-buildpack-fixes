@@ -17,14 +17,38 @@ export LD_LIBRARY_PATH="${APP_DIR}/.apt/lib/x86_64-linux-gnu/:${APP_DIR}/.apt/us
 export MAGICK_CONFIGURE_PATH="\$GM_DIRECTORY/../lib/GraphicsMagick-\$GM_VERSION/config"
 EOF
 
-# we are installing the aspera cli via bundler but we need to install a transfer agent to actually
-# send anything to Aspera AOC. If we ever stop using Aspera via the ruby gem we can probably remove
-# this.
-command -v ascli >/dev/null 2>&1 && {
+if command -v ascli >/dev/null 2>&1; then
+  # we are installing the aspera cli via bundler but we need to install a transfer
+  # agent to actually send anything to Aspera AOC. If we ever stop using Aspera
+  # via the ruby gem we can probably remove this.
   echo "-----> Installing ascp transfer agent for Aspera CLI (installed via bundler)"
-  # Without specifying HOME or ASCLI_HOME, ascp will be installed wherever HOME is when this
-  # buildpack is running. By setting HOME, ascli will install ascp in the same place as the cli will
-  # look for it when called from the app. If ASCLI_HOME is set, ascli will not try to construct the
-  # default location so we'd also need to set it in the App to make sure they always match.
-  HOME="$BUILD_DIR" ascli conf ascp install
-}
+
+  mkdir -p $CACHE_DIR
+
+  CACHED_SDK_DIR="$CACHE_DIR/ASPERA_SDK"
+  mkdir -p $CACHED_SDK_DIR
+
+  SDK_DIR="$(ascli config folder)/sdk"
+
+  if [ ! -d "${CACHED_SDK_DIR}/sdk" ]; then
+    echo "-----> Downloading aspera sdk and installing ascp"
+    # Without specifying HOME or ASCLI_HOME, ascp will be installed wherever
+    # HOME is when this buildpack is running. By setting HOME, ascli will
+    # install ascp in the same place as the cli will look for it when called
+    # from the app. If ASCLI_HOME is set, ascli will not try to construct the
+    # default location so we'd also need to set it in the App to make sure they
+    # always match.
+    HOME="$BUILD_DIR" ascli conf ascp install
+
+    # cache the sdk for future builds because downloading the sdk was intermittenly
+    # extrememly slow
+    cp -r $SDK_DIR $CACHED_SDK_DIR
+  else
+    echo "----->  Fetching aspera sdk from cache"
+    cp -r $CACHED_SDK_DIR $SDK_DIR
+  fi
+
+  # this should throw an error if it wasnt installed correctly
+  ASCP_VERSION=$(ascli config ascp info --format=json | jq -r '.ascp_version')
+  echo "----> using ascp version $ASCP_VERSION"
+fi
