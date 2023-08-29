@@ -32,6 +32,8 @@ if command -v ascli >/dev/null 2>&1; then
   SDK_DIR="$(ascli config folder)/sdk"
   CACHED_SDK="${CACHED_SDK_DIR}/sdk"
 
+  ls -lR "${CACHE_DIR}"
+
   if [ ! -d "${CACHED_SDK}" ]; then
     echo "-----> Downloading aspera sdk and installing ascp"
     # Without specifying HOME or ASCLI_HOME, ascp will be installed wherever
@@ -48,11 +50,12 @@ if command -v ascli >/dev/null 2>&1; then
 
     if [ ! -d "${CACHED_SDK}" ]; then
       echo "ERROR: expected cached sdk"
-      ls -l "${CACHED_SDK_DIR}"
       exit 1
     else
       echo "cached sdk for next build"
     fi
+    echo "files in ${CACHED_SDK_DIR}"
+    ls -l "${CACHED_SDK_DIR}"
   else
     echo "----->  Fetching aspera sdk from cache"
     cp -r "$CACHED_SDK_DIR" "$SDK_DIR"
