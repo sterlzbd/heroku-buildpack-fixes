@@ -55,7 +55,7 @@ if command -v ascli >/dev/null 2>&1; then
       echo "cached sdk for next build"
     fi
     echo "files in ${CACHED_SDK_DIR}"
-    ls -l "${CACHED_SDK_DIR}"
+    ls -lR "${CACHED_SDK_DIR}"
   else
     echo "----->  Fetching aspera sdk from cache"
     cp -r "$CACHED_SDK_DIR" "$SDK_DIR"
