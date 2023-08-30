@@ -22,13 +22,10 @@ if command -v ascli >/dev/null 2>&1; then
   # agent to actually send anything to Aspera AOC. If we ever stop using Aspera
   # via the ruby gem we can probably remove this.
   echo "-----> Installing ascp transfer agent for Aspera CLI (installed via bundler)"
-
   mkdir -p "$CACHE_DIR"
 
   # namespaced in case something else is caching an sdk
   CACHED_SDK_DIR="$CACHE_DIR/ASPERA_SDK"
-  ls -lR "${CACHE_DIR}"
-
   mkdir -p "$CACHED_SDK_DIR"
 
   SDK_DIR="$(ascli config folder)/sdk"
@@ -49,13 +46,11 @@ if command -v ascli >/dev/null 2>&1; then
     cp -r $SDK_DIR $CACHED_SDK_DIR
 
     if [ ! -d "${CACHED_SDK}" ]; then
-      echo "ERROR: expected cached sdk"
+      echo "-----> ERROR: expected cached sdk"
       exit 1
     else
-      echo "cached sdk for next build"
+      echo "       Cached sdk for next build"
     fi
-    echo "files in ${CACHED_SDK_DIR}"
-    ls -lR "${CACHED_SDK_DIR}"
   else
     echo "----->  Fetching aspera sdk from cache"
     cp -r $CACHED_SDK_DIR $SDK_DIR
