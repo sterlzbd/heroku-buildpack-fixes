@@ -23,17 +23,36 @@ if command -v ascli >/dev/null 2>&1; then
   # via the ruby gem we can probably remove this.
   echo "-----> Installing ascp transfer agent for Aspera CLI (installed via bundler)"
 
-  mkdir -p "$CACHE_DIR"
+  # The aspera-cli downloads ascp, ascp4 and transferdd for multiple build
+  # environments bundled together from some ibm demo, see
+  # https://github.com/IBM/aspera-cli/issues/20#issuecomment-757021368
+  #
+  # We've run into issue with download speeds on ci so we decided to start
+  # caching the sdk. It seems like they are planning to change to downloading
+  # from a different source eventually. In order to prevent falling behind  once
+  # they do that, we added this guard to make sure we'd re-investigate when the
+  # gem updates.
+  if [[ $(bundle exec ascli --version) != "4.12.0" ]]; then
+    echo "-----> ERROR: aspera-cli gem has been updated. Please verify download location of SDK."
+    exit 1
+  fi
+
+
 
   # namespaced in case something else is caching an sdk
   CACHED_SDK_DIR="$CACHE_DIR/ASPERA_SDK"
-  ls -lR "${CACHE_DIR}"
-
+  mkdir -p "$CACHE_DIR"
   mkdir -p "$CACHED_SDK_DIR"
 
-  ASCLI_DIR=$(ascli config folder)
+  # This is where the gem will install ascp and the licenses
+  ASCLI_DIR=$(HOME="$BUILD_DIR" ascli config folder)
+
+  # This is where the gem expects to find the sdk
   SDK_DIR="${ASCLI_DIR}/sdk"
   CACHED_SDK="${CACHED_SDK_DIR}/sdk"
+
+  # TODO: Check etag from download url to check if it's been updated since we
+  # last cached it.
 
   if [ ! -d "${CACHED_SDK}" ]; then
     echo "-----> Downloading aspera sdk and installing ascp"
@@ -47,22 +66,20 @@ if command -v ascli >/dev/null 2>&1; then
 
     # cache the sdk for future builds because downloading the sdk was
     # intermittenly extremely slow
-    cp -r $SDK_DIR $CACHED_SDK_DIR
+    cp -r "$SDK_DIR" "$CACHED_SDK_DIR"
 
     if [ ! -d "${CACHED_SDK}" ]; then
-      echo "-----> ERROR: expected cached sdk"
+      echo "-----> ERROR: expected cached sdk but found none"
       exit 1
     else
       echo "       Cached sdk for next build"
     fi
-    echo "files in ${CACHED_SDK_DIR}"
-    ls -lR "${CACHED_SDK_DIR}"
   else
     echo "----->  Fetching aspera sdk from cache"
-    cp -r $CACHED_SDK_DIR/* $ASCLI_DIR/
+    cp -r "$CACHED_SDK_DIR"/* "$ASCLI_DIR"/
   fi
 
   # this should throw an error if it wasnt installed correctly
-  ASCP_VERSION=$(ascli config ascp info --format=json | jq -r '.ascp_version')
-  echo "----> using ascp version $ASCP_VERSION"
+  ASCLI_INFO=$(ascli config ascp info --format=json)
+  echo "----> Installed $(jq -r '.product_name'<<< $ASCLI_INFO) ($(jq -r '.product_version'<<< $ASCLI_INFO)) (ascp version $(jq -r '.ascp_version'<<< $ASCLI_INFO))"
 fi
